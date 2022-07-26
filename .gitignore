@@ -48,3 +48,4 @@ app.*.map.json
 
 *.xml
 *.xml
+android/app/src/main/AndroidManifest.xml
