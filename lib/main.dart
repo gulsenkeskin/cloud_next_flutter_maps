@@ -15,7 +15,10 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final Map<String, Marker> _markers = {};
+  late final GoogleMapController _controller;
+
   Future<void> _onMapCreated(GoogleMapController controller) async {
+    _controller = controller;
     final googleOffices = await locations.getGoogleOffices();
     setState(() {
       _markers.clear();
@@ -41,13 +44,61 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Google Office Locations'),
           backgroundColor: Colors.green[700],
         ),
-        body: GoogleMap(
-          onMapCreated: _onMapCreated,
-          initialCameraPosition: const CameraPosition(
-            target: LatLng(0, 0),
-            zoom: 2,
-          ),
-          markers: _markers.values.toSet(),
+        body: Column(
+          children: [
+            Flexible(
+              flex: 1,
+              child: PageView.builder(
+                  controller: PageController(viewportFraction: 0.8),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _markers.length,
+                  // onPageChanged: (index) {
+                  // },
+                  itemBuilder: (context, index) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        SingleChildScrollView(
+                          child: InkWell(
+                            onTap: () async {
+                              await _controller.animateCamera(
+                                  CameraUpdate.newLatLng(
+                                      _markers.values.elementAt(index).position));
+                            },
+                            child: Container(
+                              color: Colors.green[700],
+                              width: MediaQuery.of(context).size.width - 87,
+                              height: MediaQuery.of(context).size.height * 0.1,
+                              child: Center(
+                                child: Text(
+                                  _markers.values
+                                      .elementAt(index)
+                                      .infoWindow
+                                      .title
+                                      .toString(),
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold, fontSize: 25, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      ],
+                    );
+                  }),
+            ),
+            Flexible(
+              flex: 7,
+              child: GoogleMap(
+                onMapCreated: _onMapCreated,
+                initialCameraPosition: const CameraPosition(
+                  target: LatLng(0, 0),
+                  zoom: 30,
+                ),
+                markers: _markers.values.toSet(),
+              ),
+            ),
+          ],
         ),
       ),
     );
