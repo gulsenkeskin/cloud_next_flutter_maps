@@ -1,4 +1,10 @@
 # cloud_next_flutter_maps
+
+<img src='assets/gif/1.gif'  width="340" height="680">   
+
+
+
+
 Inspired by the Build Mobile Apps With Flutter and Google Maps (Cloud Next '19) presentation
 
 You can view the presentation for this session here: https://www.youtube.com/watch?v=RpQLFAFqMlw
