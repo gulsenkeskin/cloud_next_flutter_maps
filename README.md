@@ -1,6 +1,5 @@
 # cloud_next_flutter_maps
- 
-Build Mobile Apps With Flutter and Google Maps (Cloud Next '19) presentation  source code
+Inspired by the Build Mobile Apps With Flutter and Google Maps (Cloud Next '19) presentation
 
 You can view the presentation for this session here: https://www.youtube.com/watch?v=RpQLFAFqMlw
 
