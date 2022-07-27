@@ -1,6 +1,7 @@
 # cloud_next_flutter_maps
 
-<img src='assets/gif/1.gif'  width="340" height="680">   
+<img src='assets/gif/1.gif'  width="340" height="680">  <img src='assets/gif/2.gif'  width="340" height="680">   
+   
 
 
 
