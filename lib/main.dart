@@ -51,61 +51,35 @@ class _MyAppState extends State<MyApp> {
         body: Column(
           children: [
             Flexible(
-              flex: 1,
-              child: PageView.builder(
-                  controller: PageController(viewportFraction: 0.8),
+                flex: 1,
+                child: ListView.separated(
+                  separatorBuilder: (BuildContext context, int index) =>  const Divider(
+                    indent: 4,
+                    color: Colors.white,
+                  ),
                   scrollDirection: Axis.horizontal,
                   itemCount: _markers.length,
-                  // onPageChanged: (index) {
-                  // },
-                  itemBuilder: (context, index) {
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        SingleChildScrollView(
-                          child: InkWell(
-                            onTap: () async {
-                              // await _controller.animateCamera(
-                              //     CameraUpdate.newLatLng(
-                              //         _markers.values.elementAt(index).position));
-                              //
-
-                              final GoogleMapController controller =
-                                  await _controller.future;
-                              controller.animateCamera(CameraUpdate.newLatLng(
-                                  _markers.values.elementAt(index).position));
-                            },
-                            child: Container(
-                              color: Colors.green[700],
-                              width: MediaQuery.of(context).size.width - 87,
-                              height: MediaQuery.of(context).size.height * 0.1,
-                              child: Center(
-                                child: Text(
-                                  _markers.values
-                                      .elementAt(index)
-                                      .infoWindow
-                                      .title
-                                      .toString(),
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 25,
-                                      color: Colors.white),
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                      ],
+                  itemBuilder: (ctx, index) {
+                    return Container(
+                      padding: EdgeInsets.only(left: 10),
+                      alignment: Alignment.centerLeft,
+                      color: Colors.green[700],
+                      width: MediaQuery.of(ctx).size.width * 0.9,
+                      height: MediaQuery.of(ctx).size.height * 0.1,
+                      child: StoreListTile(
+                        marker: _markers.values.elementAt(index),
+                        mapController: _controller,
+                      ),
                     );
-                  }),
-            ),
+                  },
+                )),
             Flexible(
-              flex: 7,
+              flex: 6,
               child: GoogleMap(
                 onMapCreated: _onMapCreated,
                 initialCameraPosition: const CameraPosition(
                   target: LatLng(0, 0),
-                  zoom: 30,
+                  zoom: 50,
                 ),
                 markers: _markers.values.toSet(),
               ),
@@ -113,6 +87,62 @@ class _MyAppState extends State<MyApp> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class StoreListTile extends StatefulWidget {
+  const StoreListTile({
+    Key? key,
+    required this.marker,
+    required this.mapController,
+  }) : super(key: key);
+
+  final Marker marker;
+  final Completer<GoogleMapController> mapController;
+
+  @override
+  _StoreListTileState createState() => _StoreListTileState();
+}
+
+class _StoreListTileState extends State<StoreListTile> {
+  bool _disposed = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(widget.marker.infoWindow.title ?? "", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+      subtitle: Text(widget.marker.infoWindow.snippet?.replaceAll("\n", " ") ?? "" ,style: TextStyle(color: Colors.white,),maxLines: 3,),
+      // leading:SizedBox.shrink(),
+      onTap: () async {
+        final GoogleMapController controller =
+            await widget.mapController.future;
+        controller
+            .animateCamera(CameraUpdate.newLatLng(widget.marker.position));
+
+        /*  await controller.animateCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(
+              target: LatLng(
+                widget.marker.position.latitude,
+                widget.marker.position.longitude,
+              ),
+              zoom: 16,
+            ),
+          ),
+        );*/
+      },
     );
   }
 }
