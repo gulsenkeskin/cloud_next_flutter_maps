@@ -1,8 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
+// import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/location.dart';
 import 'src/locations.dart' as locations;
 
 void main() {
@@ -20,6 +21,8 @@ class _MyAppState extends State<MyApp> {
   final Map<String, Marker> _markers = {};
   Completer<GoogleMapController> _controller = Completer();
   var officeList = [];
+
+  Location location = new Location();
 
   Future<void> _onMapCreated(GoogleMapController controller) async {
     _controller.complete(controller);
@@ -71,11 +74,10 @@ class _MyAppState extends State<MyApp> {
             ),
           ],
         ),
-        floatingActionButtonLocation:
-        FloatingActionButtonLocation.centerFloat,
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
         floatingActionButton: FloatingActionButton.extended(
           onPressed: () async {
-            Position position = await _determinePosition();
+            var position = await fetchLocation();
             final GoogleMapController controller = await _controller.future;
             controller.animateCamera(CameraUpdate.newLatLng(
                 LatLng(position.latitude, position.longitude)));
@@ -93,34 +95,78 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  Future<Position> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
+  // Future<Position> _determinePosition() async {
+  //   bool serviceEnabled;
+  //   LocationPermission permission;
+  //
+  //   serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  //
+  //   if (!serviceEnabled) {
+  //     return Future.error('Location services are disabled');
+  //   }
+  //
+  //   permission = await Geolocator.checkPermission();
+  //
+  //   if (permission == LocationPermission.denied) {
+  //     permission = await Geolocator.requestPermission();
+  //
+  //     if (permission == LocationPermission.denied) {
+  //       return Future.error("Location permission denied");
+  //     }
+  //   }
+  //
+  //   if (permission == LocationPermission.deniedForever) {
+  //     return Future.error('Location permissions are permanently denied');
+  //   }
+  //
+  //   Position position = await Geolocator.getCurrentPosition();
+  //
+  //   return position;
+  // }
 
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  fetchLocation() async {
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
 
-    if (!serviceEnabled) {
-      return Future.error('Location services are disabled');
-    }
-
-    permission = await Geolocator.checkPermission();
-
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-
-      if (permission == LocationPermission.denied) {
-        return Future.error("Location permission denied");
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
       }
     }
 
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error('Location permissions are permanently denied');
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
     }
 
-    Position position = await Geolocator.getCurrentPosition();
-
-    return position;
+    LocationData _currentPosition = await location.getLocation();
+    location.onLocationChanged.listen((LocationData currentLocation) {
+      setState(() {
+        _currentPosition = currentLocation;
+        // getAddress(_currentPosition.latitude, _currentPosition.longitude)
+        //     .then((value) {
+        //   setState(() {
+        //     _address = "${value.first.addressLine}";
+        //   });
+        // });
+      });
+    });
+    return _currentPosition;
   }
+
+  //deprecated
+  // getAddress(double lat, double lang) async {
+  //   final coordinates = new Coordinates(latitude, longitude);
+  //  var address =
+  //       await Geocoder.local.findAddressesFromCoordinates(coordinates);
+  //   return address;
+  // }
+  //
 }
 
 class OfficeList extends StatelessWidget {
