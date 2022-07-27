@@ -18,6 +18,7 @@ dependencies:
   http: ^0.13.4
   json_serializable: ^6.3.1
   json_annotation: ^4.6.0
+  geolocator: ^8.0.1
 
 dev_dependencies:
   flutter_test:

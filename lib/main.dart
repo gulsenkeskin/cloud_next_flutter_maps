@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'src/locations.dart' as locations;
 
@@ -17,13 +18,11 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final Map<String, Marker> _markers = {};
-  // late final GoogleMapController _controller;
   Completer<GoogleMapController> _controller = Completer();
   var officeList = [];
 
   Future<void> _onMapCreated(GoogleMapController controller) async {
     _controller.complete(controller);
-    // _controller = controller;
     final googleOffices = await locations.getGoogleOffices();
 
     setState(() {
@@ -72,8 +71,55 @@ class _MyAppState extends State<MyApp> {
             ),
           ],
         ),
+        floatingActionButtonLocation:
+        FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () async {
+            Position position = await _determinePosition();
+            final GoogleMapController controller = await _controller.future;
+            controller.animateCamera(CameraUpdate.newLatLng(
+                LatLng(position.latitude, position.longitude)));
+
+            setState(() {
+              _markers["myLocation"] = Marker(
+                  markerId: const MarkerId('currentLocation'),
+                  position: LatLng(position.latitude, position.longitude));
+            });
+          },
+          label: const Text("Current Location"),
+          icon: const Icon(Icons.location_history),
+        ),
       ),
     );
+  }
+
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled');
+    }
+
+    permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+
+      if (permission == LocationPermission.denied) {
+        return Future.error("Location permission denied");
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error('Location permissions are permanently denied');
+    }
+
+    Position position = await Geolocator.getCurrentPosition();
+
+    return position;
   }
 }
 
@@ -163,7 +209,6 @@ class _OfficeListTileState extends State<OfficeListTile> {
         ),
         maxLines: 3,
       ),
-      // leading:SizedBox.shrink(),
       leading: Container(
         child: widget.office.image.isNotEmpty
             ? CircleAvatar(
