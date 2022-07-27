@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'src/locations.dart' as locations;
@@ -15,10 +17,12 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   final Map<String, Marker> _markers = {};
-  late final GoogleMapController _controller;
+  // late final GoogleMapController _controller;
+  Completer<GoogleMapController> _controller = Completer();
 
   Future<void> _onMapCreated(GoogleMapController controller) async {
-    _controller = controller;
+    _controller.complete(controller);
+    // _controller = controller;
     final googleOffices = await locations.getGoogleOffices();
     setState(() {
       _markers.clear();
@@ -61,9 +65,15 @@ class _MyAppState extends State<MyApp> {
                         SingleChildScrollView(
                           child: InkWell(
                             onTap: () async {
-                              await _controller.animateCamera(
-                                  CameraUpdate.newLatLng(
-                                      _markers.values.elementAt(index).position));
+                              // await _controller.animateCamera(
+                              //     CameraUpdate.newLatLng(
+                              //         _markers.values.elementAt(index).position));
+                              //
+
+                              final GoogleMapController controller =
+                                  await _controller.future;
+                              controller.animateCamera(CameraUpdate.newLatLng(
+                                  _markers.values.elementAt(index).position));
                             },
                             child: Container(
                               color: Colors.green[700],
@@ -77,7 +87,9 @@ class _MyAppState extends State<MyApp> {
                                       .title
                                       .toString(),
                                   style: TextStyle(
-                                      fontWeight: FontWeight.bold, fontSize: 25, color: Colors.white),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 25,
+                                      color: Colors.white),
                                 ),
                               ),
                             ),
