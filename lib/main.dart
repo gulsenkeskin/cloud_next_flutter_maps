@@ -19,13 +19,16 @@ class _MyAppState extends State<MyApp> {
   final Map<String, Marker> _markers = {};
   // late final GoogleMapController _controller;
   Completer<GoogleMapController> _controller = Completer();
+  var officeList = [];
 
   Future<void> _onMapCreated(GoogleMapController controller) async {
     _controller.complete(controller);
     // _controller = controller;
     final googleOffices = await locations.getGoogleOffices();
+
     setState(() {
       _markers.clear();
+      officeList = googleOffices.offices;
       for (final office in googleOffices.offices) {
         final marker = Marker(
           markerId: MarkerId(office.name),
@@ -52,27 +55,10 @@ class _MyAppState extends State<MyApp> {
           children: [
             Flexible(
                 flex: 1,
-                child: ListView.separated(
-                  separatorBuilder: (BuildContext context, int index) =>  const Divider(
-                    indent: 4,
-                    color: Colors.white,
-                  ),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _markers.length,
-                  itemBuilder: (ctx, index) {
-                    return Container(
-                      padding: EdgeInsets.only(left: 10),
-                      alignment: Alignment.centerLeft,
-                      color: Colors.green[700],
-                      width: MediaQuery.of(ctx).size.width * 0.9,
-                      height: MediaQuery.of(ctx).size.height * 0.1,
-                      child: StoreListTile(
-                        marker: _markers.values.elementAt(index),
-                        mapController: _controller,
-                      ),
-                    );
-                  },
-                )),
+                child: OfficeList(
+                    markers: _markers,
+                    controller: _controller,
+                    googleOffices: officeList)),
             Flexible(
               flex: 6,
               child: GoogleMap(
@@ -91,21 +77,64 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-class StoreListTile extends StatefulWidget {
-  const StoreListTile({
+class OfficeList extends StatelessWidget {
+  const OfficeList({
+    Key? key,
+    required Map<String, Marker> markers,
+    required Completer<GoogleMapController> controller,
+    googleOffices,
+  })  : _markers = markers,
+        _controller = controller,
+        _googleOffices = googleOffices,
+        super(key: key);
+
+  final Map<String, Marker> _markers;
+  final Completer<GoogleMapController> _controller;
+  final dynamic _googleOffices;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      separatorBuilder: (BuildContext context, int index) => const Divider(
+        indent: 4,
+        color: Colors.white,
+      ),
+      scrollDirection: Axis.horizontal,
+      itemCount: _markers.length,
+      itemBuilder: (ctx, index) {
+        return Container(
+          // padding: EdgeInsets.only(left: 10),
+          alignment: Alignment.centerLeft,
+          color: Colors.green[700],
+          width: MediaQuery.of(ctx).size.width * 0.9,
+          height: MediaQuery.of(ctx).size.height * 0.1,
+          child: OfficeListTile(
+              marker: _markers.values.elementAt(index),
+              mapController: _controller,
+              office: _googleOffices[index]),
+        );
+      },
+    );
+  }
+}
+
+class OfficeListTile extends StatefulWidget {
+  const OfficeListTile({
     Key? key,
     required this.marker,
     required this.mapController,
+    required this.office,
   }) : super(key: key);
 
   final Marker marker;
   final Completer<GoogleMapController> mapController;
+  final office;
 
   @override
-  _StoreListTileState createState() => _StoreListTileState();
+  _OfficeListTileState createState() => _OfficeListTileState();
 }
 
-class _StoreListTileState extends State<StoreListTile> {
+class _OfficeListTileState extends State<OfficeListTile> {
   bool _disposed = false;
 
   @override
@@ -122,9 +151,28 @@ class _StoreListTileState extends State<StoreListTile> {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      title: Text(widget.marker.infoWindow.title ?? "", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
-      subtitle: Text(widget.marker.infoWindow.snippet?.replaceAll("\n", " ") ?? "" ,style: TextStyle(color: Colors.white,),maxLines: 3,),
+      title: Text(
+        widget.marker.infoWindow.title ?? "",
+        style:
+            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
+      subtitle: Text(
+        widget.marker.infoWindow.snippet?.replaceAll("\n", " ") ?? "",
+        style: const TextStyle(
+          color: Colors.white,
+        ),
+        maxLines: 3,
+      ),
       // leading:SizedBox.shrink(),
+      leading: Container(
+        child: widget.office.image.isNotEmpty
+            ? CircleAvatar(
+                backgroundImage: NetworkImage(widget.office.image),
+              )
+            : Container(),
+        width: 60,
+        height: 60,
+      ),
       onTap: () async {
         final GoogleMapController controller =
             await widget.mapController.future;
